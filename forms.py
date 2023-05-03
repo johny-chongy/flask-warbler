@@ -47,5 +47,5 @@ class LoginForm(FlaskForm):
     )
 
 
-class CSRFProtectionForm(FlaskForm):
+class CSRFProtectForm(FlaskForm):
     """CSRF Protection Form for protection"""
