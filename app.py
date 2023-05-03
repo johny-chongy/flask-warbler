@@ -144,7 +144,7 @@ def list_users():
     Can take a 'q' param in querystring to search by that username.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -162,7 +162,7 @@ def list_users():
 def show_user(user_id):
     """Show user profile."""
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -177,7 +177,7 @@ def show_user(user_id):
 def show_following(user_id):
     """Show list of people this user is following."""
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -189,7 +189,7 @@ def show_following(user_id):
 def show_followers(user_id):
     """Show list of followers of this user."""
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -253,7 +253,7 @@ def profile():
             user.username,
             form.password.data,
         ):
-            
+
             user.username = form.username.data
             user.email = form.email.data
             user.image_url = form.image_url.data
@@ -362,8 +362,11 @@ def homepage():
     """
 
     if g.user:
+        following_ids = [user.id for user in g.user.following]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids + [g.user.id]))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
