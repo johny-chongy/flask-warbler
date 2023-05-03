@@ -2,8 +2,9 @@
 
 {% block content %}
 
-<div id="warbler-hero"
-     class="full-width">
+<div class="d-flex justify-content-center">
+  <img src="{{ user.header_image_url }}" id="warbler-hero"
+       class="img-fluid">
 </div>
 <img src="{{ user.image_url }}"
      alt="Image for {{ user.username }}"
