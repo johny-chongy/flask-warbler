@@ -84,5 +84,6 @@ class EditProfileForm(FlaskForm):
         validators=[Optional(), URL(), Length(max=255)]
     )
 
+
 class CSRFProtectForm(FlaskForm):
     """CSRF Protection Form for protection"""
