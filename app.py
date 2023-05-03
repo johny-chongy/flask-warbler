@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm
+from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm, EditProfileForm
 from models import db, connect_db, User, Message
 
 load_dotenv()
@@ -141,7 +141,7 @@ def list_users():
     Can take a 'q' param in querystring to search by that username.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -159,7 +159,7 @@ def list_users():
 def show_user(user_id):
     """Show user profile."""
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -172,7 +172,7 @@ def show_user(user_id):
 def show_following(user_id):
     """Show list of people this user is following."""
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -184,7 +184,7 @@ def show_following(user_id):
 def show_followers(user_id):
     """Show list of followers of this user."""
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -199,7 +199,7 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -217,7 +217,7 @@ def stop_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -232,7 +232,26 @@ def stop_following(follow_id):
 def profile():
     """Update profile for current user."""
 
-    # IMPLEMENT THIS
+    if not g.user or not g.csrf_form.validate_on_submit:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = g.user
+    form = EditProfileForm(obj=user)
+
+    if form.validate_on_submit():
+        user.location = form.location.data
+        user.bio = form.bio.data
+        user.header_image_url = form.header_image_url.data
+
+        db.session.commit()
+
+        return redirect(f"/users/{user.id}")
+    else:
+
+        return render_template("users/edit.html",
+                               form=form)
+
 
 
 @app.post('/users/delete')
@@ -242,7 +261,7 @@ def delete_user():
     Redirect to signup page.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -264,7 +283,7 @@ def add_message():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -284,7 +303,7 @@ def add_message():
 def show_message(message_id):
     """Show a message."""
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -300,7 +319,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    if not g.user:
+    if not g.user or not g.csrf_form.validate_on_submit:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -322,7 +341,6 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of self & followed_users
     """
-    form = g.csrf_form
 
     if g.user:
         messages = (Message
@@ -331,7 +349,7 @@ def homepage():
                     .limit(100)
                     .all())
 
-        return render_template('home.html', messages=messages, form=form)
+        return render_template('home.html', messages=messages)
 
     else:
         return render_template('home-anon.html')
