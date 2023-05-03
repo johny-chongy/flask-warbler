@@ -24,8 +24,7 @@ connect_db(app)
 
 
 ##############################################################################
-# User signup/login/logout
-
+# USER BEFORE/LOGIN/LOGOUT
 
 @app.before_request
 def add_user_to_g():
@@ -52,6 +51,8 @@ def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
 
+##############################################################################
+# USER SIGNUP
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
@@ -90,6 +91,8 @@ def signup():
     else:
         return render_template('users/signup.html', form=form)
 
+##############################################################################
+# USER LOGIN/LOGOUT ROUTES
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -132,7 +135,7 @@ def logout():
 
 
 ##############################################################################
-# General user routes:
+# USERS
 
 @app.get('/users')
 def list_users():
@@ -167,6 +170,8 @@ def show_user(user_id):
 
     return render_template('users/show.html', user=user)
 
+##############################################################################
+# FOLLOWING/FOLLOWERS
 
 @app.get('/users/<int:user_id>/following')
 def show_following(user_id):
@@ -191,6 +196,8 @@ def show_followers(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('users/followers.html', user=user)
 
+##############################################################################
+# FOLLOW/STOP FOLLOWING
 
 @app.post('/users/follow/<int:follow_id>')
 def start_following(follow_id):
@@ -227,6 +234,8 @@ def stop_following(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+##############################################################################
+# USER PROFILE
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
@@ -240,19 +249,29 @@ def profile():
     form = EditProfileForm(obj=user)
 
     if form.validate_on_submit():
-        user.location = form.location.data
-        user.bio = form.bio.data
-        user.header_image_url = form.header_image_url.data
+        if User.authenticate(
+            user.username,
+            form.password.data,
+        ):
+            
+            user.username = form.username.data
+            user.email = form.email.data
+            user.image_url = form.image_url.data
+            user.location = form.location.data
+            user.bio = form.bio.data
+            user.header_image_url = form.header_image_url.data
 
-        db.session.commit()
+            db.session.commit()
 
-        return redirect(f"/users/{user.id}")
-    else:
+            return redirect(f"/users/{user.id}")
 
-        return render_template("users/edit.html",
+        flash("Incorrect password.", "danger")
+
+    return render_template("users/edit.html",
                                form=form)
 
-
+##############################################################################
+# USER DELETE
 
 @app.post('/users/delete')
 def delete_user():
@@ -274,7 +293,7 @@ def delete_user():
 
 
 ##############################################################################
-# Messages routes:
+# MESSAGES
 
 @app.route('/messages/new', methods=["GET", "POST"])
 def add_message():
@@ -331,7 +350,7 @@ def delete_message(message_id):
 
 
 ##############################################################################
-# Homepage and error pages
+# HOMEPAGE AND ERROR PAGES
 
 
 @app.get('/')
