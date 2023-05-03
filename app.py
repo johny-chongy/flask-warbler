@@ -30,6 +30,7 @@ connect_db(app)
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
 
+    #TODO: can add own function with own @app.before_request decorator :o
     g.csrf_form = CSRFProtectForm()
 
     if CURR_USER_KEY in session:
@@ -67,7 +68,7 @@ def signup():
     """
 
     do_logout()
-
+    #TODO: if user exists, redirect to User page
     form = UserAddForm()
 
     if form.validate_on_submit():
@@ -99,7 +100,7 @@ def login():
     """Handle user login and redirect to homepage on success."""
 
     form = LoginForm()
-
+    #TODO: if user exists, redirect to User page
     if form.validate_on_submit():
         user = User.authenticate(
             form.username.data,
@@ -121,17 +122,13 @@ def logout():
     """Handle logout of user and redirect to homepage."""
 
     form = g.csrf_form
-
+    #TODO: only proceed if a User is signed in; else redirect
     if form.validate_on_submit():
         do_logout()
 
         flash("Successfully logged out", "success")
 
         return redirect("/login")
-
-
-    # IMPLEMENT THIS AND FIX
-    # DO NOT CHANGE METHOD ON ROUTE
 
 
 ##############################################################################
@@ -206,7 +203,7 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -224,7 +221,7 @@ def stop_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -238,10 +235,10 @@ def stop_following(follow_id):
 # USER PROFILE
 
 @app.route('/users/profile', methods=["GET", "POST"])
-def profile():
+def update_profile():
     """Update profile for current user."""
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -256,12 +253,14 @@ def profile():
 
             user.username = form.username.data
             user.email = form.email.data
-            user.image_url = form.image_url.data
+            user.image_url = form.image_url.data #TODO: implement default img
             user.location = form.location.data
             user.bio = form.bio.data
-            user.header_image_url = form.header_image_url.data
+            user.header_image_url = form.header_image_url.data #TODO: implement default img
 
             db.session.commit()
+
+            flash("User updated!", "success")
 
             return redirect(f"/users/{user.id}")
 
@@ -280,7 +279,7 @@ def delete_user():
     Redirect to signup page.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -302,7 +301,7 @@ def add_message():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -322,7 +321,7 @@ def add_message():
 def show_message(message_id):
     """Show a message."""
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -338,7 +337,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit:
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -363,10 +362,11 @@ def homepage():
 
     if g.user:
         following_ids = [user.id for user in g.user.following]
+        following_ids.append(g.user.id)
 
         messages = (Message
                     .query
-                    .filter(Message.user_id.in_(following_ids + [g.user.id]))
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
