@@ -392,6 +392,58 @@ def homepage():
         return render_template('home-anon.html')
 
 
+##############################################################################
+# LIKE/UNLIKE REQUESTS
+
+@app.post('/like/<int:msg_id>')
+def like_msg(msg_id):
+    """Add LikeMessage Instance to DB for current user"""
+    #TODO: GUARD
+    if not g.user or g.csrf_form.validate_on_submit():
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    else:#TODO: no need for "Else same with unlike_msg, show_likes"
+        url = request.form["url"] or "/"
+        message = Message.query.get(msg_id)
+        g.user.liked_messages.append(message)
+
+        db.session.commit()
+
+        return redirect(url)
+
+@app.post('/unlike/<int:msg_id>')
+def unlike_msg(msg_id):
+    """Add LikeMessage Instance to DB for current user"""
+
+    if not g.user or g.csrf_form.validate_on_submit():
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    else:
+        url = request.form["url"] or "/"
+        message = Message.query.get(msg_id)
+        g.user.liked_messages.remove(message)
+
+        db.session.commit()
+
+        return redirect(url)
+
+
+@app.get("/users/<int:user_id>/likes")
+def show_likes(user_id):
+    """Show all messages current user liked"""
+
+    if not g.user or g.csrf_form.validate_on_submit():
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    else:
+        user = User.query.get_or_404(user_id)
+        messages = user.liked_messages
+
+        return render_template("likes.html",
+                        messages=messages,
+                        user=user)
+
+
 @app.after_request
 def add_header(response):
     """Add non-caching headers on every request."""
