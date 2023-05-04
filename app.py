@@ -6,8 +6,10 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import (UserAddForm, LoginForm, MessageForm,
-                   CSRFProtectForm, EditProfileForm)
+                   CSRFProtectForm,
+                   EditProfileForm)
 from models import (db, connect_db, User, Message,
+                    LikedMessage,
                     DEFAULT_HEADER_IMAGE_URL,
                     DEFAULT_IMAGE_URL)
 
