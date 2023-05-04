@@ -39,6 +39,14 @@
                 </a>
               </h4>
             </li>
+            <li class="stat">
+              <p class="small">Likes</p>
+              <h4>
+                <a href="/users/{{ g.user.id }}/likes">
+                  {{ g.user.liked_messages | length }}
+                </a>
+              </h4>
+            </li>
           </ul>
         </div>
       </div>
@@ -48,10 +56,32 @@
       <ul class="list-group" id="messages">
         {% for msg in messages %}
           <li class="list-group-item">
-            <a href="/messages/{{ msg.id }}" class="message-link"/>
-            <a href="/users/{{ msg.user.id }}">
-              <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
-            </a>
+            <a href="/messages/{{ msg.id }}" class="message-link">
+              <div class="d-flex flex-column align-items-center">
+                <a href="/users/{{ msg.user.id }}">
+                  <img src="{{ msg.user.image_url }}" alt="" class="timeline-image">
+                </a>
+                {% if msg not in g.user.liked_messages %}
+                <form class="mt-3" action="/like/{{msg.id}}" method="POST"
+                style="z-index: 1000;">
+                <input type="hidden" name="url" value="/">
+                  <button class="btn btn-transparent">
+                    <i class="bi bi-balloon-heart"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+                {% if msg in g.user.liked_messages %}
+                <form class="mt-3" action="/unlike/{{msg.id}}" method="POST"
+                style="z-index: 1000;">
+                <input type="hidden" name="url" value="/">
+                  <button class="btn btn-transparent">
+                    <i class="bi bi-balloon-heart-fill"></i>
+                  </button>
+                </form>
+                {% endif %}
+
+              </div>
             <div class="message-area">
               <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
