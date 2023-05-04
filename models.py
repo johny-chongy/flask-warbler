@@ -182,35 +182,8 @@ class Message(db.Model):
         nullable=False,
     )
 
-    likes = db.relationship('User', secondary="likes", backref="message")
+    likes = db.relationship('User', secondary="likes", backref="liked_messages")
 
-class LikedMessage(db.Model):
-    """A liked warble"""
-
-    __tablename__ = "likes"
-
-    id = db.Column(
-        db.Integer,
-        primary_key=True,
-    )
-
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-
-    message_id = db.Column(
-        db.Integer,
-        db.ForeignKey('messages.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-
-"""
-the likedmesage w/ the ID is not necessary because the combination of user_id
-and message_id will always be unique, and does not need an additional
-unique identifier (chatgpt)
-"""
 class LikedMessage(db.Model):
     """A liked warble"""
 
