@@ -5,8 +5,11 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, CSRFProtectForm, EditProfileForm
-from models import db, connect_db, User, Message
+from forms import (UserAddForm, LoginForm, MessageForm,
+                   CSRFProtectForm, EditProfileForm)
+from models import (db, connect_db, User, Message,
+                    DEFAULT_HEADER_IMAGE_URL,
+                    DEFAULT_IMAGE_URL)
 
 load_dotenv()
 
@@ -30,15 +33,17 @@ connect_db(app)
 def add_user_to_g():
     """If we're logged in, add curr user to Flask global."""
 
-    #TODO: can add own function with own @app.before_request decorator :o
-    g.csrf_form = CSRFProtectForm()
-
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
 
     else:
         g.user = None
 
+@app.before_request
+def add_CSRF_form_to_g():
+    """Declare g variable for CSRF form validation"""
+
+    g.csrf_form = CSRFProtectForm()
 
 def do_login(user):
     """Log in user."""
@@ -68,7 +73,10 @@ def signup():
     """
 
     do_logout()
-    #TODO: if user exists, redirect to User page
+
+    if g.user:
+        return redirect("/")
+
     form = UserAddForm()
 
     if form.validate_on_submit():
@@ -100,7 +108,10 @@ def login():
     """Handle user login and redirect to homepage on success."""
 
     form = LoginForm()
-    #TODO: if user exists, redirect to User page
+
+    if g.user:
+        return redirect("/")
+
     if form.validate_on_submit():
         user = User.authenticate(
             form.username.data,
@@ -122,7 +133,10 @@ def logout():
     """Handle logout of user and redirect to homepage."""
 
     form = g.csrf_form
-    #TODO: only proceed if a User is signed in; else redirect
+
+    if not g.user:
+        return redirect("/")
+
     if form.validate_on_submit():
         do_logout()
 
@@ -203,7 +217,7 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user or g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -221,7 +235,7 @@ def stop_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user or g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -250,13 +264,12 @@ def update_profile():
             user.username,
             form.password.data,
         ):
-
             user.username = form.username.data
             user.email = form.email.data
-            user.image_url = form.image_url.data #TODO: implement default img
+            user.image_url = form.image_url.data or DEFAULT_IMAGE_URL
             user.location = form.location.data
             user.bio = form.bio.data
-            user.header_image_url = form.header_image_url.data #TODO: implement default img
+            user.header_image_url = form.header_image_url.data or DEFAULT_HEADER_IMAGE_URL
 
             db.session.commit()
 
@@ -279,7 +292,7 @@ def delete_user():
     Redirect to signup page.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user or g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -301,7 +314,7 @@ def add_message():
     Show form if GET. If valid, update message and redirect to user page.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -337,7 +350,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user or g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
