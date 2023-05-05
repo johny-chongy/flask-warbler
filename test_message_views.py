@@ -7,6 +7,7 @@
 
 import os
 from unittest import TestCase
+from sqlalchemy.exc import NoResultFound
 
 from models import db, Message, User
 
@@ -57,7 +58,7 @@ class MessageBaseViewTestCase(TestCase):
 
 
 class MessageAddViewTestCase(MessageBaseViewTestCase):
-    def test_add_message(self):
+    def test_add_message_logged_in(self):
         # Since we need to change the session to mimic logging in,
         # we need to use the changing-session trick:
         with self.client as c:
@@ -69,5 +70,20 @@ class MessageAddViewTestCase(MessageBaseViewTestCase):
             resp = c.post("/messages/new", data={"text": "Hello"})
 
             self.assertEqual(resp.status_code, 302)
-
             Message.query.filter_by(text="Hello").one()
+            #returns error if msg not recorded
+
+
+    def test_add_message_logged_out(self):
+        # Now, that session setting is saved, so we can have
+        # the rest of ours test
+        with self.client as c:
+            resp = c.post("/messages/new", data={"text": "Hello"})
+
+            self.assertEqual(resp.status_code, 302)
+
+            self.assertRaises(NoResultFound,
+                             Message.query.filter_by(text="Hello").one)
+
+
+
