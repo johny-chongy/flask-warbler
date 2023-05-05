@@ -40,6 +40,7 @@ class MessageModelTestCase(TestCase):
         u2 = User.signup("u2", "u2@email.com", "password", None)
 
         db.session.commit()
+
         self.u1_id = u1.id
         self.u2_id = u2.id
 

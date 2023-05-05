@@ -56,18 +56,16 @@ class UserBaseViewTestCase(TestCase):
         self.client = app.test_client()
 
 
-
 class UserBaseFollowerViewTestCase(UserBaseViewTestCase):
+
     def test_see_follower_following_logged_in(self):
+        """User 1 should be able to see that user 2 is following user 3."""
         with self.client as c:
             with c.session_transaction() as sess:
                 sess[CURR_USER_KEY] = self.u1_id
 
-            u1 = User.query.get(self.u1_id)
-            u2 = User.query.get(self.u2_id)
             u3 = User.query.get(self.u3_id)
 
-                #simulate User2 following User3
             u2_follow_u3 = Follow(user_being_followed_id=self.u3_id,
                                       user_following_id=self.u2_id)
 
@@ -80,13 +78,9 @@ class UserBaseFollowerViewTestCase(UserBaseViewTestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f"<p>@{u3.username}</p>", html)
 
-    def test_see_follower_following_logged_in(self):
+    def test_see_follower_following_logged_out(self):
         with self.client as c:
-            u1 = User.query.get(self.u1_id)
-            u2 = User.query.get(self.u2_id)
-            u3 = User.query.get(self.u3_id)
 
-                #simulate User2 following User3
             u2_follow_u3 = Follow(user_being_followed_id=self.u3_id,
                                       user_following_id=self.u2_id)
 
@@ -100,3 +94,47 @@ class UserBaseFollowerViewTestCase(UserBaseViewTestCase):
 
             self.assertIn("Access unauthorized", html)
             self.assertIn("Sign up", html)
+
+"""TODO: check for when user is not following (logged in and logged out)"""
+"""TODO: check for followers endpoint"""
+"""TODO: CHECK EVERY ENDPOINT"""
+
+# TODO: MAKE A SETUP FOR LIKES
+
+class UserLikesViewTestCase(UserBaseViewTestCase):
+    def test_see_user_likes_logged_in(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
+
+            u2 = User.query.get(self.u2_id)
+            u1_message = Message(text="first like", user_id=self.u1_id)
+
+            db.session.add(u1_message)
+            db.session.commit()
+
+            u2.liked_messages.append(u1_message)
+
+            resp = c.get(f"/users/{u2.id}/likes")
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn("first like", html)
+
+    def test_see_user_likes_not_logged_in(self):
+        with self.client as c:
+
+            u2 = User.query.get(self.u2_id)
+            u1_message = Message(text="first like", user_id=self.u1_id)
+
+            db.session.add(u1_message)
+            db.session.commit()
+
+            u2.liked_messages.append(u1_message)
+
+            resp = c.get(f"/users/{u2.id}/likes",
+                         follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn("Access unauthorized.", html)

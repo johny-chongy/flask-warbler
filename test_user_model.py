@@ -64,6 +64,7 @@ class UserModelTestCase(TestCase):
         u2.followers.append(u1)
 
         self.assertEqual(u1.is_following(u2), True)
+        self.assertEqual(u2.is_following(u1), False)
 
     def test_is_not_following(self):
         """Is user 1 not following user 2"""
@@ -91,6 +92,8 @@ class UserModelTestCase(TestCase):
         u2 = User.query.get(self.u2_id)
 
         self.assertEqual(u2.is_followed_by(u1), False)
+
+# TODO: put concern separators
 
     def test_user_signup_success(self):
         """
