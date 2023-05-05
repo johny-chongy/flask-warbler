@@ -104,10 +104,8 @@ class MessageDeleteViewTestCase(MessageBaseViewTestCase):
             self.assertEqual(resp.status_code, 302)
             self.assertNotIn(m1, u1.messages)
 
-
     def test_delete_message_logged_out(self):
         with self.client as c:
-            m1 = Message.query.get(self.m1_id)
 
             resp = c.post(f"/messages/{self.m1_id}/delete",
                           follow_redirects=True)
@@ -116,15 +114,18 @@ class MessageDeleteViewTestCase(MessageBaseViewTestCase):
 
             self.assertIn("Access unauthorized.", html)
 
-    # def test_delete_other_user_message(self):
-    #     with self.client as c:
-    #         with c.session_transaction() as sess:
-    #             sess[CURR_USER_KEY] = self.u1_id
+    def test_delete_other_user_message(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.u1_id
 
+            m2 = Message.query.get(self.m2_id)
+            u2 = User.query.get(self.u2_id)
 
-    #     resp = c.post(f"/messages/{self.m2_id}/delete",
-    #                   follow_redirects=True)
+            resp = c.post(f"/messages/{self.m2_id}/delete",
+                        follow_redirects=True)
 
-    #     html = resp.get_data(as_text=True)
+            html = resp.get_data(as_text=True)
 
-    #     self.assertIn("Access unauthorized.", html)
+            self.assertIn("Access unauthorized.", html)
+            self.assertIn(m2, u2.messages)
