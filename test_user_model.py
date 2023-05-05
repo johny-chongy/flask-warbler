@@ -109,7 +109,6 @@ class UserModelTestCase(TestCase):
         self.assertEqual(user.image_url, DEFAULT_IMAGE_URL)
         self.assertTrue(user.password.startswith("$2b$12$"))
 
-
     def test_user_signup_fail(self):
         """
         Does the User signup successfully create a new user given
@@ -119,3 +118,28 @@ class UserModelTestCase(TestCase):
         user = User.signup("u2", "u2@email.com", "password", None)
 
         self.assertRaises(IntegrityError, db.session.commit)
+
+    def test_successful_authenticate(self):
+        """
+        Does User.authenticate return a user with valid
+        username and id?
+        """
+        u1 = User.query.get(self.u1_id)
+
+        self.assertEqual(User.authenticate("u1","password"), u1)
+
+    def test_invalid_username_authenticate(self):
+        """
+        Does User.authenticate return false with a invalid
+        username input?
+        """
+
+        self.assertFalse(User.authenticate("wrongusername","password"))
+
+    def test_invalid_password_authenticate(self):
+        """
+        Does User.authenticate return false with a invalid
+        password input?
+        """
+
+        self.assertFalse(User.authenticate("u1","wrongpassword"))
