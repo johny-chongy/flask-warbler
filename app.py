@@ -219,7 +219,7 @@ def start_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -237,7 +237,7 @@ def stop_following(follow_id):
     Redirect to following page for the current for the current user.
     """
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -294,7 +294,7 @@ def delete_user():
     Redirect to signup page.
     """
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -352,7 +352,7 @@ def delete_message(message_id):
     Redirect to user page on success.
     """
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
@@ -398,24 +398,23 @@ def homepage():
 @app.post('/like/<int:msg_id>')
 def like_msg(msg_id):
     """Add LikeMessage Instance to DB for current user"""
-    #TODO: GUARD
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    else:#TODO: no need for "Else same with unlike_msg, show_likes"
-        url = request.form["url"] or "/"
-        message = Message.query.get(msg_id)
-        g.user.liked_messages.append(message)
 
-        db.session.commit()
+    url = request.form["url"] or "/"
+    message = Message.query.get(msg_id)
+    g.user.liked_messages.append(message)
 
-        return redirect(url)
+    db.session.commit()
+
+    return redirect(url)
 
 @app.post('/unlike/<int:msg_id>')
 def unlike_msg(msg_id):
     """Add LikeMessage Instance to DB for current user"""
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit():
         flash("Access unauthorized.", "danger")
         return redirect("/")
     else:
@@ -432,16 +431,16 @@ def unlike_msg(msg_id):
 def show_likes(user_id):
     """Show all messages current user liked"""
 
-    if not g.user or g.csrf_form.validate_on_submit():
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    else:
-        user = User.query.get_or_404(user_id)
-        messages = user.liked_messages
 
-        return render_template("likes.html",
-                        messages=messages,
-                        user=user)
+    user = User.query.get_or_404(user_id)
+    messages = user.liked_messages
+
+    return render_template("likes.html",
+                    messages=messages,
+                    user=user)
 
 
 @app.after_request

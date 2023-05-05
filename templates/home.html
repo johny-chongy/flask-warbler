@@ -65,6 +65,7 @@
                 <!-- refactor to O(n) [hint:sets] -->
                 <form class="mt-3" action="/like/{{msg.id}}" method="POST"
                 style="z-index: 1000;">
+                {{ g.csrf_form.hidden_tag() }}
                 <input type="hidden" name="url" value="{{ request.url }}">
                   <button class="btn btn-transparent">
                     <i class="bi bi-balloon-heart"></i>
@@ -75,6 +76,7 @@
                 {% if msg in g.user.liked_messages %}
                 <form class="mt-3" action="/unlike/{{msg.id}}" method="POST"
                 style="z-index: 1000;">
+                {{ g.csrf_form.hidden_tag() }}
                 <input type="hidden" name="url" value=" {{ request.url }} ">
                   <button class="btn btn-transparent">
                     <i class="bi bi-balloon-heart-fill"></i>
