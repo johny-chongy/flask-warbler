@@ -37,7 +37,6 @@ def add_user_to_g():
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
-
     else:
         g.user = None
 
@@ -189,7 +188,6 @@ def show_user(user_id):
 @app.get('/users/<int:user_id>/following')
 def show_following(user_id):
     """Show list of people this user is following."""
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -351,12 +349,12 @@ def delete_message(message_id):
     Check that this message was written by the current user.
     Redirect to user page on success.
     """
+    msg = Message.query.get_or_404(message_id)
 
-    if not g.user or not g.csrf_form.validate_on_submit():
+    if not g.user or not g.csrf_form.validate_on_submit() or g.user.id != msg.user_id:
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get_or_404(message_id)
     db.session.delete(msg)
     db.session.commit()
 
